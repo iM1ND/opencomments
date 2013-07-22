@@ -19,7 +19,7 @@ class PluginOpencomments extends Plugin {
 
 	protected $aDelegates = array(
 		'template' => array('comment_tree.tpl' => '_comment_tree.tpl', 'comment.tpl' => '_comment.tpl', 
-		                    'block.stream_comment.tpl' => '_block.stream_comment.tpl', 'comment_list.tpl' => '_comment_list.tpl'),
+		                    'blocks/block.stream_comment.tpl' => '_blocks/block.stream_comment.tpl', 'comment_list.tpl' => '_comment_list.tpl'),
 	);
 	
 	protected $aInherits = array(

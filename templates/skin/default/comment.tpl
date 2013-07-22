@@ -33,7 +33,7 @@
 	<ul class="comment-info">
 	{if !$oUser->getId() }
     		<li class="comment-author {if $iAuthorId == $oUser->getId()}comment-topic-author{/if}" title="{if $iAuthorId == $oUser->getId() and $sAuthorNotice}{$sAuthorNotice}{/if}">
-				<b>{$oComment->getGuestName()}</b>&nbsp;&nbsp;&nbsp;<i><small>{$aLang.opencomments_guest}</small></i>
+				<b>{$oComment->getGuestName()}</b>&nbsp;&nbsp;&nbsp;<i><small>{$aLang.plugin.opencomments.opencomments_guest}</small></i>
 			</li>
     {else}
     		<li class="comment-author {if $iAuthorId == $oUser->getId()}comment-topic-author{/if}" title="{if $iAuthorId == $oUser->getId() and $sAuthorNotice}{$sAuthorNotice}{/if}">

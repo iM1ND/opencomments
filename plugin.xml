@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+	<name>
+		<lang name="default">OpenComments</lang>
+	</name>
+	<author>
+		<lang name="default">flexbyte(адаптация iMind)</lang>
+	</author>
+	<homepage>http://livestreet.ru</homepage>
+	<version>1.4.3</version>
+	<requires>
+		<livestreet>1.0.3</livestreet>
+		<plugins>
+		</plugins>
+	</requires>
+	<description>
+		<lang name="default">OpenComments</lang>
+		<lang name="russian">Позволяет посетителям оставлять комментарии без регистрации.</lang>
+	</description>
+</plugin>

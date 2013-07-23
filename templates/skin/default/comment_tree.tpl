@@ -85,7 +85,7 @@
 		{include file='editor.tpl' sImgToLoad='form_comment_text' sSettingsTinymce='ls.settings.getTinymceComment()' sSettingsMarkitup='ls.settings.getMarkitupComment()'}
 		
 		<h4 class="reply-header" id="comment_id_0">
-			<a href="#" class="link-dotted" onclick="ls.comments.toggleCommentForm(0); return false;">{$sNoticeCommentAdd}</a>
+			<a href="#" class="link-dotted" onclick="ls.comments.toggleCommentForm(0);document.getElementById('commentCaptcha').src='{cfg name='path.root.engine_lib'}/external/kcaptcha/index.php?{$_sPhpSessionName}={$_sPhpSessionId}&n='+Math.random(); return false;">{$sNoticeCommentAdd}</a>
 		</h4>	
 		<div id="reply" class="reply">
 			<form method="post" id="form_comment" onsubmit="return false;" enctype="multipart/form-data">	
@@ -104,7 +104,7 @@
           
           		<div style="padding-top:15px;">
 						<b>{$aLang.plugin.opencomments.opencomments_captcha}:</b><br />
-						<img src="{cfg name='path.root.engine_lib'}/external/kcaptcha/index.php?{$_sPhpSessionName}={$_sPhpSessionId}" name="commentCaptcha" onclick="this.src='{cfg name='path.root.engine_lib'}/external/kcaptcha/index.php?{$_sPhpSessionName}={$_sPhpSessionId}&n='+Math.random();"><br />
+						<img src="{cfg name='path.root.engine_lib'}/external/kcaptcha/index.php?{$_sPhpSessionName}={$_sPhpSessionId}" id="commentCaptcha" onclick="this.src='{cfg name='path.root.engine_lib'}/external/kcaptcha/index.php?{$_sPhpSessionName}={$_sPhpSessionId}&n='+Math.random();"><br />
 						<input type="text" name="captcha" value="" size="9" class="input-text" style="text-align: center;width:80px;"><br /><br />
 				</div>
 				<button type="submit"  name="submit_comment" 

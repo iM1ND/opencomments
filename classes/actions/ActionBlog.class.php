@@ -48,11 +48,11 @@ class PluginOpencomments_ActionBlog extends PluginOpencomments_Inherit_ActionBlo
 				}
 			}
 			
-            if (!func_check(getRequest("guest_name"),"text",2,20)) {
-                $this->Message_AddErrorSingle($this->Lang_Get('plugin.opencomments.opencomments_error_name'),$this->Lang_Get('error'));
-                return;
-            }
-            
+			if (!func_check(getRequest("guest_name"),"text",2,20)) {
+				$this->Message_AddErrorSingle($this->Lang_Get('plugin.opencomments.opencomments_error_name'),$this->Lang_Get('error'));
+				return;
+			}
+			
 			if (Config::Get('plugin.opencomments.ask_mail')) {
 				if (!func_check(getRequest("guest_email"),"mail")) {
 					$this->Message_AddErrorSingle($this->Lang_Get('plugin.opencomments.opencomments_error_mail'),$this->Lang_Get('error'));
@@ -60,10 +60,10 @@ class PluginOpencomments_ActionBlog extends PluginOpencomments_Inherit_ActionBlo
 				}
 			}
 
-            if (!isset($_SESSION['captcha_keystring']) or $_SESSION['captcha_keystring']!=strtolower(getRequest('captcha'))) {
-                $this->Message_AddErrorSingle($this->Lang_Get('plugin.opencomments.opencomments_error_captcha'),$this->Lang_Get('error'));
-                return;
-            }
+			if (!isset($_SESSION['captcha_keystring']) or $_SESSION['captcha_keystring']!=strtolower(getRequest('captcha'))) {
+				$this->Message_AddErrorSingle($this->Lang_Get('plugin.opencomments.opencomments_error_captcha'),$this->Lang_Get('error'));
+				return;
+			}
 		}
 
 		/**
@@ -168,12 +168,12 @@ class PluginOpencomments_ActionBlog extends PluginOpencomments_Inherit_ActionBlo
 		$oCommentNew->setPublish($oTopic->getPublish());
 		
 		if ($guest) { 
-            $oCommentNew->setGuestName(getRequest("guest_name"));                           
-            $oCommentNew->setGuestEmail(getRequest("guest_email"));                                
-            unset($_SESSION['captcha_keystring']);
-        } else {
-		    $oCommentNew->setGuestName(null);                           
-            $oCommentNew->setGuestEmail(null);
+			$oCommentNew->setGuestName(getRequest("guest_name"));
+			$oCommentNew->setGuestEmail(getRequest("guest_email"));
+			unset($_SESSION['captcha_keystring']);
+		} else {
+			$oCommentNew->setGuestName(null);
+			$oCommentNew->setGuestEmail(null);
 		}
 
 		/**
@@ -201,25 +201,32 @@ class PluginOpencomments_ActionBlog extends PluginOpencomments_Inherit_ActionBlo
 			*/
 			$this->oUserCurrent->setDateCommentLast(date("Y-m-d H:i:s"));
 			$this->User_Update($this->oUserCurrent);
+
 			/**
-			* Отправка уведомления автору топика
-			*/
-			$oUserTopic=$oTopic->getUser();
-			if ($oCommentNew->getUserId()!=$oUserTopic->getId()) {
-				$this->Notify_SendCommentNewToAuthorTopic($oUserTopic,$oTopic,$oCommentNew,$this->oUserCurrent);
-			}
+			 * Список емайлов на которые не нужно отправлять уведомление
+			 */
+			$aExcludeMail=array();
+			if (!$guest) $aExcludeMail[]=$this->oUserCurrent->getMail();
 			/**
 			* Отправляем уведомление тому на чей коммент ответили
 			*/
-			if ($oCommentParent and $oCommentParent->getUserId()!=$oTopic->getUserId() and $oCommentNew->getUserId()!=$oCommentParent->getUserId()) {
+			if ($oCommentParent and $oCommentParent->getUserId()!=0 and $oCommentParent->getUserId()!=$oTopic->getUserId() and $oCommentNew->getUserId()!=$oCommentParent->getUserId()) {
 				$oUserAuthorComment=$oCommentParent->getUser();
+				$aExcludeMail[]=$oUserAuthorComment->getMail();
 				$this->Notify_SendCommentReplyToAuthorParentComment($oUserAuthorComment,$oTopic,$oCommentNew,$this->oUserCurrent);
 			}
-
-            /**
-             * Добавляем событие в ленту
-             */
-            $this->Stream_write($oCommentNew->getUserId(), 'add_comment', $oCommentNew->getId(), $oTopic->getPublish() && $oTopic->getBlog()->getType()!='close');
+			/**
+			 * Отправка уведомления автору топика
+			 */
+			$this->Subscribe_Send('topic_new_comment',$oTopic->getId(),'notify.comment_new.tpl',$this->Lang_Get('notify_subject_comment_new'),array(
+				'oTopic' => $oTopic,
+				'oComment' => $oCommentNew,
+				'oUserComment' => $this->oUserCurrent,
+			),$aExcludeMail);
+			/**
+			 * Добавляем событие в ленту
+			 */
+			$this->Stream_write($oCommentNew->getUserId(), 'add_comment', $oCommentNew->getId(), $oTopic->getPublish() && $oTopic->getBlog()->getType()!='close');
 		} else {
 			$this->Message_AddErrorSingle($this->Lang_Get('system_error'),$this->Lang_Get('error'));
 		}

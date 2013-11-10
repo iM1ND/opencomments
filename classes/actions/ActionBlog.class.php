@@ -25,45 +25,45 @@ class PluginOpencomments_ActionBlog extends PluginOpencomments_Inherit_ActionBlo
 		/**
 		 * Проверяем авторизован ли пользователь
 		 */
-		$guest = false;
-		if (!$this->User_IsAuthorization()) {
+		if ($this->User_IsAuthorization()) {
+			parent::SubmitComment();
+			return;
+		} else {
 			$this->oUserCurrent = $this->User_GetUserById(0);
-			$guest = true;
-
-			if (!Config::Get('plugin.opencomments.enabled')) {
-				$this->Message_AddErrorSingle($this->Lang_Get('not_access'),$this->Lang_Get('error'));
-				return;
-			}
-			
-			/**
-			* Проверяем на наличие aceAdminPanel, чтобы проверить IP адрес в бане
-			*/
-			if (class_exists('PluginAceadminpanel')) {
-				$plugins = $this->Plugin_GetActivePlugins();
-				if (in_array('aceadminpanel', $plugins)) {
-					if ($this->PluginAceadminpanel_Admin_IsBanIp(func_getIp())) {
-						$this->Message_AddErrorSingle($this->Lang_Get('adm_banned2_text'), $this->Lang_Get('error'));
-						return;
-					}
-				}
-			}
-			
-            if (!func_check(getRequest("guest_name"),"text",2,20)) {
-                $this->Message_AddErrorSingle($this->Lang_Get('plugin.opencomments.opencomments_error_name'),$this->Lang_Get('error'));
-                return;
-            }
-            
-			if (Config::Get('plugin.opencomments.ask_mail')) {
-				if (!func_check(getRequest("guest_email"),"mail")) {
-					$this->Message_AddErrorSingle($this->Lang_Get('plugin.opencomments.opencomments_error_mail'),$this->Lang_Get('error'));
+		}
+		if (!Config::Get('plugin.opencomments.enabled')) {
+			$this->Message_AddErrorSingle($this->Lang_Get('not_access'),$this->Lang_Get('error'));
+			return;
+		}
+		
+		/**
+		 * Проверяем на наличие aceAdminPanel, чтобы проверить IP адрес в бане
+		 */
+		if (class_exists('PluginAceadminpanel')) {
+			$plugins = $this->Plugin_GetActivePlugins();
+			if (in_array('aceadminpanel', $plugins)) {
+				if ($this->PluginAceadminpanel_Admin_IsBanIp(func_getIp())) {
+					$this->Message_AddErrorSingle($this->Lang_Get('adm_banned2_text'), $this->Lang_Get('error'));
 					return;
 				}
 			}
-
-            if (!isset($_SESSION['captcha_keystring']) or $_SESSION['captcha_keystring']!=strtolower(getRequest('captcha'))) {
-                $this->Message_AddErrorSingle($this->Lang_Get('plugin.opencomments.opencomments_error_captcha'),$this->Lang_Get('error'));
-                return;
-            }
+		}
+		
+		if (!func_check(getRequest("guest_name"),"text",2,20)) {
+			$this->Message_AddErrorSingle($this->Lang_Get('plugin.opencomments.opencomments_error_name'),$this->Lang_Get('error'));
+			return;
+		}
+		
+		if (Config::Get('plugin.opencomments.ask_mail')) {
+			if (!func_check(getRequest("guest_email"),"mail")) {
+				$this->Message_AddErrorSingle($this->Lang_Get('plugin.opencomments.opencomments_error_mail'),$this->Lang_Get('error'));
+				return;
+			}
+		}
+		
+		if (!isset($_SESSION['captcha_keystring']) or $_SESSION['captcha_keystring']!=strtolower(getRequest('captcha'))) {
+			$this->Message_AddErrorSingle($this->Lang_Get('plugin.opencomments.opencomments_error_captcha'),$this->Lang_Get('error'));
+			return;
 		}
 
 		/**
@@ -82,20 +82,6 @@ class PluginOpencomments_ActionBlog extends PluginOpencomments_Inherit_ActionBlo
 		}
 
 		/**
-		* Проверяем разрешено ли постить комменты
-		*/
-		if (!$guest and !$this->ACL_CanPostComment($this->oUserCurrent) and !$this->oUserCurrent->isAdministrator()) {
-			$this->Message_AddErrorSingle($this->Lang_Get('topic_comment_acl'),$this->Lang_Get('error'));
-			return;
-		}
-		/**
-		* Проверяем разрешено ли постить комменты по времени
-		*/
-		if (!$guest and !$this->ACL_CanPostCommentTime($this->oUserCurrent) and !$this->oUserCurrent->isAdministrator()) {
-			$this->Message_AddErrorSingle($this->Lang_Get('topic_comment_limit'),$this->Lang_Get('error'));
-			return;
-		}
-		/**
 		* Проверяем запрет на добавления коммента автором топика
 		*/
 		if ($oTopic->getForbidComment()) {
@@ -105,11 +91,7 @@ class PluginOpencomments_ActionBlog extends PluginOpencomments_Inherit_ActionBlo
 		/**
 		* Проверяем текст комментария
 		*/
-		if ($guest) {
-			$sText=nl2br(strip_tags(getRequest('comment_text')));
-		} else {
-			$sText=$this->Text_Parser(getRequest('comment_text'));
-		}
+		$sText=nl2br(strip_tags(getRequest('comment_text')));
 		
 		if (!func_check($sText,'text',2,10000)) {
 			$this->Message_AddErrorSingle($this->Lang_Get('topic_comment_add_text_error'),$this->Lang_Get('error'));
@@ -167,14 +149,9 @@ class PluginOpencomments_ActionBlog extends PluginOpencomments_Inherit_ActionBlo
 		$oCommentNew->setTextHash(md5($sText));
 		$oCommentNew->setPublish($oTopic->getPublish());
 		
-		if ($guest) { 
-            $oCommentNew->setGuestName(getRequest("guest_name"));                           
-            $oCommentNew->setGuestEmail(getRequest("guest_email"));                                
-            unset($_SESSION['captcha_keystring']);
-        } else {
-		    $oCommentNew->setGuestName(null);                           
-            $oCommentNew->setGuestEmail(null);
-		}
+		$oCommentNew->setGuestName(getRequest("guest_name"));
+		$oCommentNew->setGuestEmail(getRequest("guest_email"));
+		unset($_SESSION['captcha_keystring']);
 
 		/**
 		* Добавляем коммент
@@ -201,21 +178,27 @@ class PluginOpencomments_ActionBlog extends PluginOpencomments_Inherit_ActionBlo
 			*/
 			$this->oUserCurrent->setDateCommentLast(date("Y-m-d H:i:s"));
 			$this->User_Update($this->oUserCurrent);
+
 			/**
-			* Отправка уведомления автору топика
-			*/
-			$oUserTopic=$oTopic->getUser();
-			if ($oCommentNew->getUserId()!=$oUserTopic->getId()) {
-				$this->Notify_SendCommentNewToAuthorTopic($oUserTopic,$oTopic,$oCommentNew,$this->oUserCurrent);
-			}
+			 * Список емайлов на которые не нужно отправлять уведомление
+			 */
+			$aExcludeMail=array();
 			/**
 			* Отправляем уведомление тому на чей коммент ответили
 			*/
-			if ($oCommentParent and $oCommentParent->getUserId()!=$oTopic->getUserId() and $oCommentNew->getUserId()!=$oCommentParent->getUserId()) {
+			if ($oCommentParent and $oCommentParent->getUserId()!=0 and $oCommentParent->getUserId()!=$oTopic->getUserId() and $oCommentNew->getUserId()!=$oCommentParent->getUserId()) {
 				$oUserAuthorComment=$oCommentParent->getUser();
+				$aExcludeMail[]=$oUserAuthorComment->getMail();
 				$this->Notify_SendCommentReplyToAuthorParentComment($oUserAuthorComment,$oTopic,$oCommentNew,$this->oUserCurrent);
 			}
-
+			/**
+			 * Отправка уведомления автору топика
+			 */
+			$this->Subscribe_Send('topic_new_comment',$oTopic->getId(),'notify.comment_new.tpl',$this->Lang_Get('notify_subject_comment_new'),array(
+				'oTopic' => $oTopic,
+				'oComment' => $oCommentNew,
+				'oUserComment' => $this->oUserCurrent,
+			),$aExcludeMail);
             /**
              * Добавляем событие в ленту
              */
